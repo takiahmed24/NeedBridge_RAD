@@ -1,2 +1,3 @@
-# scms-CoreTech
-Student Course Management  System
+# NeedBridge
+SOFTWARE ENGINEERING 
+
