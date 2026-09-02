@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NeedBridge – RAD Model Gantt Chart</title>
+<style>
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Calibri,Arial,sans-serif;
+    background:#ffffff;
+    padding:30px 34px 60px;
+    color:#1f2733;
+  }
+  h1{
+    font-size:24px;
+    color:#4a72b8;
+    margin:0 0 22px;
+    font-weight:700;
+  }
+  .wrap{overflow-x:auto;border:1px solid #d7dde5;}
+  table{
+    border-collapse:collapse;
+    width:100%;
+    min-width:1500px;
+    font-size:12.5px;
+  }
+  th, td{
+    border:1px solid #c9d1db;
+    padding:8px 10px;
+    vertical-align:middle;
+  }
+  thead th{
+    background:#1b3660;
+    color:#fff;
+    font-weight:700;
+    text-align:left;
+    white-space:nowrap;
+  }
+  thead th.wk{
+    text-align:center;
+    min-width:52px;
+  }
+  td.id{font-weight:700;white-space:nowrap;}
+  td.task{min-width:300px;}
+  td.dur{white-space:nowrap;color:#3a4453;}
+  td.stage{white-space:nowrap;color:#3a4453;}
+  tr.phase td{
+    background:#e4eaf5;
+    font-weight:700;
+    color:#12233f;
+  }
+  tr.sub td{
+    background:#ffffff;
+  }
+  td.wk{
+    padding:0;
+    height:34px;
+    text-align:center;
+  }
+  .cell{
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  .business{background:#4a72b8;}
+  .business-light{background:#5b9bd5;}
+  .data{background:#6aa84f;}
+  .data-light{background:#5b9bd5;}
+  .process{background:#e69138;}
+  .process-light{background:#5b9bd5;}
+  .appgen{background:#8e63c9;}
+  .turnover{background:#2a9d8f;}
+  .legend{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    margin:14px 2px 0;
+    font-size:12px;
+    color:#3a4453;
+  }
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block;}
+</style>
+</head>
+<body>
+
+<h1>NeedBridge — RAD Model Project Gantt Chart / Timeline</h1>
+
+<div class="wrap">
+<table id="gantt"></table>
+</div>
+
+<div class="legend">
+  <span><span class="sw" style="background:#4a72b8"></span>Business Modeling</span>
+  <span><span class="sw" style="background:#6aa84f"></span>Data Modeling</span>
+  <span><span class="sw" style="background:#e69138"></span>Process Modeling</span>
+  <span><span class="sw" style="background:#5b9bd5"></span>Verification / Test Planning</span>
+  <span><span class="sw" style="background:#8e63c9"></span>Application Generation (Prototyping)</span>
+  <span><span class="sw" style="background:#2a9d8f"></span>Testing & Turnover</span>
+</div>
+
+<script>
+const WEEKS = 10;
+
+// id, task, duration, stage, colorClass, startWeek(1-indexed), span, isPhase(bold header row)
+const rows = [
+  {id:"1.0", task:"Business Modeling", dur:"2 Weeks", stage:"Business Modeling", color:"business", start:1, span:2, phase:true},
+  {id:"1.1", task:"Taki: Business Process & Requirement Gathering", dur:"1 Week", stage:"Business Modeling", color:"business", start:1, span:1},
+  {id:"1.2", task:"Orpi: Business Validation Planning", dur:"1 Week", stage:"Verification", color:"business-light", start:2, span:1},
+
+  {id:"2.0", task:"Data Modeling", dur:"2 Weeks", stage:"Data Modeling", color:"data", start:3, span:2, phase:true},
+  {id:"2.1", task:"Shammi: ER Diagram & Data Design (Users, Products, Orders, Payments, Reviews)", dur:"1 Week", stage:"Data Modeling", color:"data", start:3, span:1},
+  {id:"2.2", task:"Orpi: Data Validation & Test Planning", dur:"1 Week", stage:"Verification", color:"data-light", start:4, span:1},
+
+  {id:"3.0", task:"Process Modeling", dur:"2 Weeks", stage:"Process Modeling", color:"process", start:5, span:2, phase:true},
+  {id:"3.1", task:"Taki: Workflow Design (Browse → Cart → CheckOut → Payment)", dur:"1 Week", stage:"Process Modeling", color:"process", start:5, span:1},
+  {id:"3.2", task:"Noor: Process Test Planning", dur:"1 Week", stage:"Verification", color:"process-light", start:6, span:1},
+
+  {id:"4.0", task:"Application Generation – Iteration 1", dur:"1 Week", stage:"App. Generation", color:"appgen", start:7, span:1, phase:true},
+  {id:"4.1", task:"Shammi: Rapid Prototype – Home, Products & Categories", dur:"1 Week", stage:"App. Generation", color:"appgen", start:7, span:1},
+
+  {id:"5.0", task:"Application Generation – Iteration 2", dur:"1 Week", stage:"App. Generation", color:"appgen", start:8, span:1, phase:true},
+  {id:"5.1", task:"Shorme: Rapid Prototype – Cart, Orders & Payments", dur:"1 Week", stage:"App. Generation", color:"appgen", start:8, span:1},
+
+  {id:"6.0", task:"Application Generation – Iteration 3", dur:"1 Week", stage:"App. Generation", color:"appgen", start:9, span:1, phase:true},
+  {id:"6.1", task:"Noor: Rapid Prototype – Portal_Customer, Portal_Vendor & Reviews", dur:"1 Week", stage:"App. Generation", color:"appgen", start:9, span:1},
+
+  {id:"7.0", task:"Testing & Turnover", dur:"1 Week", stage:"Testing & Turnover", color:"turnover", start:10, span:1, phase:true},
+  {id:"7.1", task:"Shorme: Integration Testing, UAT & Deployment", dur:"1 Week", stage:"Testing & Turnover", color:"turnover", start:10, span:1},
+];
+
+const table = document.getElementById('gantt');
+
+let thead = document.createElement('thead');
+let hrow = document.createElement('tr');
+hrow.innerHTML = '<th>ID</th><th>Task / Activity</th><th>Duration</th><th>RAD Stage</th>' +
+  Array.from({length:WEEKS},(_,i)=>`<th class="wk">W${i+1}</th>`).join('');
+thead.appendChild(hrow);
+table.appendChild(thead);
+
+let tbody = document.createElement('tbody');
+rows.forEach(r=>{
+  const tr = document.createElement('tr');
+  tr.className = r.phase ? 'phase' : 'sub';
+  let html = `<td class="id">${r.id}</td><td class="task">${r.task}</td><td class="dur">${r.dur}</td><td class="stage">${r.stage}</td>`;
+  for(let w=1; w<=WEEKS; w++){
+    if(w>=r.start && w<r.start+r.span){
+      html += `<td class="wk"><span class="cell ${r.color}"></span></td>`;
+    } else {
+      html += `<td class="wk"></td>`;
+    }
+  }
+  tr.innerHTML = html;
+  tbody.appendChild(tr);
+});
+table.appendChild(tbody);
+</script>
+
+</body>
+</html>
